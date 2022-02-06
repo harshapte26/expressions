@@ -166,6 +166,25 @@ public:
     std::string result_;
 };
 
+class SaveVisitor: public Visitor {
+public:
+    void Visit(Constant &e) {
+        result_ = (std::stringstream() << "(" << e.x_ << ")").str();
+    }
+
+    void Visit(Op &e) {
+        std::stringstream result;
+        result << "(";
+        e.l_->Accept(*this);
+        result << result_ << e.op_;
+        e.r_->Accept(*this);
+        result << result_ << ")";
+        result_ = result.str();
+    }
+
+    std::stringstream result_;
+};
+
 TEST(Expressions, Test2) {
     std::string s = "1+2*3-4";
     auto e = parse(s);
