@@ -6,6 +6,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <memory>
 
 class Expression {
 public:

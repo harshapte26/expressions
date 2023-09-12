@@ -4,6 +4,7 @@
 #include <string>
 #include <cmath>
 #include <map>
+#include <memory>
 
 #include <gtest/gtest.h>
 
@@ -182,7 +183,7 @@ public:
         result_ = result.str();
     }
 
-    std::stringstream result_;
+    std::string result_;
 };
 
 TEST(Expressions, Test2) {
