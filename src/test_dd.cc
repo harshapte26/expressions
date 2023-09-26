@@ -10,11 +10,13 @@
 
 class Constant;
 class Op;
+class Equation;
 
 class Visitor {
 public: 
     virtual void Visit(Constant &e) = 0;
     virtual void Visit(Op &e) = 0;
+    virtual void Visit(Equation &e) = 0;
 };
 
 class Expression
@@ -97,8 +99,35 @@ public:
     std::unique_ptr<Expression> r_;
 };
 
+class Equation : public Expression {
+public:
+  Equation(std::unique_ptr<Expression> expr) : expr_(std::move(expr)) {
+    RegisterLoader("Equation", Load);
+  }
+
+  void Accept(Visitor &visitor) override {
+    visitor.Visit(*this); 
+  }
+
+  static std::unique_ptr<Expression> Load(std::istream& s) {
+    return std::make_unique<Equation>(Expression::Load(s));
+  }
+
+    char op_ = '='; 
+
+// private:
+  std::unique_ptr<Expression> expr_;
+};
+
 std::unique_ptr<Expression> parse(std::string t)
-{
+{   
+    
+    if (t == "Equation") {
+        return std::make_unique<Equation>(parse(t.substr(1))); 
+        }
+    
+    // TODO :: logic to handle variable if ()
+
     for (int i = t.size(); i >= 0; i--)
         if (t[i] == '+' || t[i] == '-')
             return std::make_unique<Op>(t[i], parse(t.substr(0, i)), parse(t.substr(i + 1)));
@@ -144,6 +173,12 @@ public:
             abort();
         }
     }
+
+    void Visit(Equation &i) {
+        i.expr_->Accept(*this);
+        result_ = result_; 
+        }
+
 //private:
     double result_;
 };
@@ -163,6 +198,11 @@ public:
         result << result_ << ")";
         result_ = result.str();
     }
+
+    void Visit(Equation &i) {
+        i.expr_->Accept(*this);
+        result_ = result_ + "= " + result_;
+}
 
     std::string result_;
 };
@@ -197,6 +237,16 @@ TEST(Expressions, Test2) {
     auto v2 = PrettyPrintVisitor();
     e->Accept(v2);
     std::cout << v2.result_ << std::endl;
+
+    auto g = parse("a*1");
+    auto v3 = ComputeVisitor();
+    g->Accept(v3); // Prints 2
+
+    auto v4 = PrettyPrintVisitor();
+    g->Accept(v4); // Prints (2*1)=2
+
+    std::cout << v3.result_ << std::endl;
+    std::cout << v4.result_ << std::endl;
 
     // std::cout << e->compute() << std::endl;
     // std::cout << e->PrettyPrint2() << std::endl;
